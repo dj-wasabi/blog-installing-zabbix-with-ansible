@@ -1,0 +1,13 @@
+
+roles:
+  - name: geerlingguy.mysql
+    version: 3.3.0
+  - src: geerlingguy.apache
+    version: 3.1.4
+  - name: wdijkerman.php
+    src: https://github.com/dj-wasabi/ansible-role-php.git
+
+collections:
+  - name: https://github.com/ansible-collections/community.zabbix.git
+    type: git
+    version: 1.2.0

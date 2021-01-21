@@ -1,0 +1,29 @@
+---
+- hosts: all:!bastion
+  become: true
+  collections:
+    - community.zabbix
+
+  roles:
+    - role: zabbix_agent
+  
+  post_tasks:
+    - name: "Make /var/lib/zabbix"
+      file:
+        path: /var/lib/zabbix
+        owner: zabbix
+        group: zabbix
+        state: directory
+      when:
+        inventory_hostname in groups['database']
+
+    - name: "Installing"
+      copy:
+        content: |
+          [client]
+          user='monitor'
+          password='secret'
+          host={{ ansible_host }}
+        dest: /var/lib/zabbix/.my.cnf
+      when:
+        inventory_hostname in groups['database']

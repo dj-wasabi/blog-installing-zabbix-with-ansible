@@ -1,0 +1,37 @@
+---
+# This file is used by all hosts and basically provides the defaults we will use.
+# If you find in an other file in the group_vars a similar property but with a different value,
+# then for that group of hosts that different value will be used instead of the one found here.
+
+ansible_user: vagrant
+zabbix_link_templates_default:
+  - "Linux by Zabbix agent active"
+
+zabbix_host_groups:
+  - Linux servers
+
+zabbix_link_templates:
+  - "{{ zabbix_link_templates_append if zabbix_link_templates_append is defined else [] }}"
+  - "{{ zabbix_link_templates_default }}"
+
+zabbix_version: 5.2
+zabbix_url: http://zabbix.example.com
+zabbix_install_pip_packages: true
+zabbix_api_user: Admin
+zabbix_api_pass: zabbix
+zabbix_api_create_hosts: true
+zabbix_api_create_hostgroup: present
+zabbix_proxy: node-3
+zabbix_agent_server: "{{ hostvars[zabbix_proxy]['ansible_host'] }}"
+zabbix_agent_serveractive: "{{ hostvars[zabbix_proxy]['ansible_host'] }}"
+
+zabbix_agent_interfaces:
+  - type: "1"
+    main: "1"
+    useip: "1"
+    ip: "{{ ansible_host }}"
+    dns: "{{ ansible_fqdn }}"
+    port: "10050"
+
+zabbix_macros:
+  - "{{ zabbix_macros_append if zabbix_macros_append is defined else [] }}"

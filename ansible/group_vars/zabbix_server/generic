@@ -1,0 +1,22 @@
+---
+
+# Zabbix Server Configuration
+zabbix_server_database: mysql
+zabbix_server_database_long: mysql
+zabbix_server_dbport: 3306
+zabbix_server_dbhost: zabbix-database
+zabbix_server_dbhost_run_install: true
+zabbix_server_privileged_host: "{{ hostvars['node-1']['ansible_host'] }}"
+zabbix_server_mysql_login_host: localhost
+zabbix_server_mysql_login_user: root
+zabbix_server_mysql_login_port: 3306
+zabbix_proxy: null
+
+zabbix_websrv: apache
+zabbix_php_fpm_conf_listen: False
+zabbix_agent_hostname: "Zabbix server"
+
+zabbix_agent_server: "{{ hostvars['node-1']['ansible_host'] }}"
+zabbix_agent_serveractive: "{{ hostvars['node-1']['ansible_host'] }}"
+zabbix_link_templates_append:
+  - 'Zabbix Server'

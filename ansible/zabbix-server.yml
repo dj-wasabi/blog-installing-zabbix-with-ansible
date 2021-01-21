@@ -1,0 +1,136 @@
+---
+
+- hosts: zabbix_database
+  become: true
+  roles:
+    - role: geerlingguy.mysql
+
+- name: Installing Zabbix
+  hosts: zabbix_server
+  become: true
+  collections:
+    - community.zabbix
+
+  roles:
+    - role: zabbix_server
+    - role: geerlingguy.apache
+    - role: wdijkerman.php
+    - role: zabbix_web
+
+  post_tasks:
+    - name: Create user group
+      connection: local
+      become: false
+      register: api_create_user_group
+      until: api_create_user_group is succeeded
+      community.zabbix.zabbix_usergroup:
+        server_url: "{{ zabbix_url }}"
+        login_user: "{{ zabbix_api_user }}"
+        login_password: "{{ zabbix_api_pass }}"
+        name: ops
+        state: present
+
+    - name: 'Create an email mediatype with message templates'
+      become: false
+      connection: local
+      register: api_create_mediatype
+      until: api_create_mediatype is succeeded
+      community.zabbix.zabbix_mediatype:
+        name: "A: Ops email"
+        server_url: "{{ zabbix_url }}"
+        login_user: "{{ zabbix_api_user }}"
+        login_password: "{{ zabbix_api_pass }}"
+        type: 'email'
+        smtp_email: 'ops@example.com'
+        smtp_server: 'mail.example.com'
+        smtp_helo: 'example.com'
+        message_templates:
+          - eventsource: triggers
+            recovery: operations
+            subject: "Problem: {EVENT.NAME}"
+            body: "Problem started at {EVENT.TIME} on {EVENT.DATE}\r\nProblem name: {EVENT.NAME}\r\n"
+          - eventsource: triggers
+            recovery: recovery_operations
+            subject: "Resolved: {EVENT.NAME}"
+            body: "Problem resolved at {EVENT.TIME} on {EVENT.DATE}\r\nProblem name: {EVENT.NAME}\r\n"
+          - eventsource: triggers
+            recovery: update_operations
+            subject: "Updated problem: {EVENT.NAME}"
+            body: "{USER.FULLNAME} {EVENT.UPDATE.ACTION} problem at {EVENT.UPDATE.DATE} {EVENT.UPDATE.TIME}.\r\n"
+          - eventsource: discovery
+            recovery: operations
+            subject: "Discovery: {DISCOVERY.DEVICE.STATUS} {DISCOVERY.DEVICE.IPADDRESS}"
+            body: "Discovery rule: {DISCOVERY.RULE.NAME}\r\n\r\nDevice IP: {DISCOVERY.DEVICE.IPADDRESS}"
+          - eventsource: autoregistration
+            recovery: operations
+            subject: "Autoregistration: {HOST.HOST}"
+            body: "Host name: {HOST.HOST}\r\nHost IP: {HOST.IP}\r\nAgent port: {HOST.PORT}"
+
+    - name: Deploy trigger action
+      connection: local
+      become: false
+      register: api_create_trigger
+      until: api_create_trigger is succeeded
+      community.zabbix.zabbix_action:
+        server_url: "{{ zabbix_url }}"
+        login_user: "{{ zabbix_api_user }}"
+        login_password: "{{ zabbix_api_pass }}"
+        name: "A: Send alerts to Admin"
+        event_source: 'trigger'
+        state: present
+        status: enabled
+        esc_period: "60"
+        conditions:
+          - type: 'trigger_severity'
+            operator: '>='
+            value: 'Information'
+        operations:
+          - type: send_message
+            subject: "Something bad is happening"
+            message: "Come on, guys do something"
+            media_type: 'Email'
+            send_to_groups:
+              - 'ops'
+
+    - name: create of zabbix user.
+      connection: local
+      become: false
+      register: api_create_user
+      until: api_create_user is succeeded
+      community.zabbix.zabbix_user:
+        server_url: "{{ zabbix_url }}"
+        login_user: "{{ zabbix_api_user }}"
+        login_password: "{{ zabbix_api_pass }}"
+        alias: wdijkerman
+        name: Werner
+        surname: Dijkerman
+        usrgrps:
+          - ops
+          - Zabbix administrators
+        passwd: password
+        lang: en_GB
+        theme: blue-theme
+        autologin: no
+        autologout: '0'
+        refresh: '30'
+        rows_per_page: '200'
+        after_login_url: ''
+        user_medias:
+          - mediatype: Email
+            sendto: wdijkerman@example.com
+            period: 1-7,00:00-24:00
+            severity:
+              not_classified: no
+              information: yes
+              warning: yes
+              average: yes
+              high: yes
+              disaster: yes
+            active: no
+        type: Zabbix super admin
+        state: present
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted

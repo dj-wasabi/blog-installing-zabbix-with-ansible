@@ -1,0 +1,22 @@
+---
+
+# Zabbix Proxy Configuration
+zabbix_proxy_database: mysql
+zabbix_proxy_database_long: mysql
+zabbix_proxy_dbport: 3306
+zabbix_proxy_dbhost: zabbix-proxy
+zabbix_proxy_dbhost_run_install: true
+zabbix_proxy_privileged_host: "{{ ansible_host }}"
+zabbix_proxy_mysql_login_host: localhost
+zabbix_proxy_mysql_login_user: root
+zabbix_proxy_mysql_login_port: 3306
+
+zabbix_link_templates_append:
+  - 'Zabbix Proxy'
+
+zabbix_server_host: "{{ hostvars['node-1']['ansible_host'] }}"
+zabbix_agent_hostname: "Zabbix proxy"
+zabbix_api_create_proxy: true
+zabbix_proxy_name: node-3
+zabbix_proxy_configfrequency: 60
+

@@ -1,0 +1,18 @@
+---
+
+mysql_users:
+ - name: monitor
+   host: "{{ ansible_host }}"
+   password: "{{ zabbix_database_secret_password }}"
+   priv: '*.*:USAGE,REPLICATION CLIENT,PROCESS'
+
+zabbix_agent_userparameters_templates_src: "{{ inventory_dir }}/files/zabbix/mysql"
+zabbix_agent_userparameters:
+  - name: template_db_mysql.conf
+
+zabbix_link_templates_append:
+  - 'MySQL by Zabbix agent'
+
+zabbix_macros_append:
+  - macro_key: "MYSQL.HOST"
+    macro_value: "{{ ansible_host }}"
