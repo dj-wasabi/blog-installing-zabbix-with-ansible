@@ -2,6 +2,10 @@ IMAGE_NAME = "bento/ubuntu-20.04"
 N = 3
 
 Vagrant.configure("2") do |config|
+    config.vm.provider :virtualbox do |vb|
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    end
+    
     config.ssh.insert_key = false
 
     config.vm.provider "virtualbox" do |v|
